@@ -41,6 +41,8 @@ class DETR(nn.Module):
         self.backbone = backbone
         self.aux_loss = aux_loss
 
+        self.batch_idx = 0
+
     def forward(self, samples: NestedTensor):
         """ The forward expects a NestedTensor, which consists of:
                - samples.tensor: batched images, of shape [batch_size x 3 x H x W]
@@ -66,6 +68,11 @@ class DETR(nn.Module):
 
         outputs_class = self.class_embed(hs)
         outputs_coord = self.bbox_embed(hs).sigmoid()
+        torch.save({
+            "outputs_class": outputs_class[-1],
+            "outputs_coord": outputs_coord[-1],
+        }, f"output/outputs_{self.batch_idx}.pth")
+        self.batch_idx = self.batch_idx + 1
         out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
         if self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord)
